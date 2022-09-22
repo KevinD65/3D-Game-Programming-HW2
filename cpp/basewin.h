@@ -1,6 +1,17 @@
 #ifndef _BASEWIN_H
 #define _BASEWIN_H
 
+#define MINKOW_DIFF 0
+
+#define MINKOW_SUM 1
+
+#define QUICK 2
+
+#define POINT_CONVEX 3
+
+#define GJK 4
+
+
 template <class DERIVED_TYPE> 
 class BaseWindow
 {
@@ -18,6 +29,86 @@ public:
             SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
 
             pThis->m_hwnd = hwnd;
+        }
+        else if (uMsg == WM_COMMAND) {
+            switch (wParam) {
+            case MINKOW_DIFF:
+                SetWindowTextW(hwnd, L"HAHAHAHAHAHAHAH");
+
+
+                /*
+                import AFG_ConvexHull from "../AFG_ConvexHull.js";
+import AFG_Circle from "../AFG_Circle.js";
+import {getRandomInt} from "../AFG_Math.js";
+import {PointConvexHullIntersectionMouseMoveHandler} from "../AFG_MouseHandlers.js";
+
+export default class PointConvexHullIntersectionDemo {
+    constructor() {
+    }
+
+    resetDemo(sceneGraph,renderer) {
+        this.sceneGraph = sceneGraph;
+        this.renderer = renderer;
+        this.renderer.renderStats = false;
+        this.renderer.renderQuickHull = true;
+
+        let mouseMoveHandler = new PointConvexHullIntersectionMouseMoveHandler();
+
+
+        let margin = 20;
+
+        var hull = new AFG_ConvexHull();
+
+        hull.quickHull = true;
+
+        // INITIALIZE ALL NEEDED SHAPES
+        // var graph = new AFG_Graph();
+        // window.afg.sceneGraph.addSceneObject(graph);
+
+        for (var i = 0; i < 15; i++) {
+            var circle = new AFG_Circle();
+            circle.setMouseMoveHandler(mouseMoveHandler);
+            var maxWidth = this.renderer.grid.windowWidth;
+            var maxHeight = this.renderer.grid.windowHeight;
+            circle.centerX = getRandomInt(0 + margin, maxWidth - margin);
+            circle.centerY = getRandomInt(0 + margin, maxHeight - margin);
+            circle.radius = 0;
+            //window.afg.sceneGraph.addSceneObject(circle);
+            hull.points.push(circle);
+        }
+        // PROVIDE EVENT HANDLING RESPONSES
+        // THAT WILL EMPLOY INTERSECTION TESTS
+
+        hull.setMouseMoveHandler(mouseMoveHandler);
+        // PROVIDE TEXTUAL DESCRIPTIONS
+        this.sceneGraph.addSceneObject(hull);
+
+
+        var circle = new AFG_Circle();
+        circle.setMouseMoveHandler(mouseMoveHandler);
+        circle.centerX = 400;
+        circle.centerY = 400;
+        circle.radius = 10;
+        circle.vectorProperty = null;
+        this.sceneGraph.addSceneObject(circle);
+
+
+    }
+
+    generateStats(stats, eventHandler) {
+        stats.numStats = 0;
+    }
+
+    
+    getProperties(){
+        let properties = new Array();
+        properties['sceneGraph'] = this.sceneGraph;
+        return properties;
+    }
+
+}*/
+                break;
+            }
         }
         else
         {
@@ -63,14 +154,71 @@ public:
             nWidth, nHeight, hWndParent, hMenu, GetModuleHandle(NULL), this
             );
 
-        //NEW WINDOW CLASS DATA (WNDCLASS STRUCTURE) FOR BUTTONS
-        WNDCLASS wcb = {};
+        //NEW WINDOWS FOR BUTTONS
+        HWND MDhwndButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"Minkowski Difference Demo",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD,  // Styles 
+            10,         // x position 
+            10,         // y position 
+            200,        // Button width
+            50,        // Button height
+            m_hwnd,     // Parent window
+            (HMENU) MINKOW_DIFF,       // HMENU with MINKOW_DIFF
+            /*(HINSTANCE)GetWindowLongPtr(m_hwnd, GWLP_HINSTANCE)*/NULL,
+            NULL);      // Pointer not needed.
 
-        wcb.lpfnWndProc = DERIVED_TYPE::WindowProc;
-        wcb.hInstance = GetModuleHandle(NULL);
-        wcb.lpszClassName = ClassName();
+        HWND MShwndButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"Minkowski Sum Demo",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10,         // x position 
+            60,         // y position 
+            200,        // Button width
+            50,        // Button height
+            m_hwnd,     // Parent window
+            (HMENU) MINKOW_SUM,       // HMENU with MINKOW_SUM
+            (HINSTANCE)GetWindowLongPtr(m_hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
 
-        RegisterClass(&wcb);
+        HWND QHhwndButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"Quickhull Demo",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10,         // x position 
+            110,         // y position 
+            200,        // Button width
+            50,        // Button height
+            m_hwnd,     // Parent window
+            (HMENU) QUICK,       // HMENU with QUICK
+            (HINSTANCE)GetWindowLongPtr(m_hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
+
+        HWND PQHhwndButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"Point Convex Hull Demo",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10,         // x position 
+            160,         // y position 
+            200,        // Button width
+            50,        // Button height
+            m_hwnd,     // Parent window
+            (HMENU) POINT_CONVEX,       // HMENU with POINT_CONVEX
+            (HINSTANCE)GetWindowLongPtr(m_hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
+
+        HWND GJKhwndButton = CreateWindow(
+            L"BUTTON",  // Predefined class; Unicode assumed 
+            L"GJK",      // Button text 
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            10,         // x position 
+            210,         // y position 
+            200,        // Button width
+            50,        // Button height
+            m_hwnd,     // Parent window
+            (HMENU) GJK,       // HMENU with GJK
+            (HINSTANCE)GetWindowLongPtr(m_hwnd, GWLP_HINSTANCE),
+            NULL);      // Pointer not needed.
 
         return (m_hwnd ? TRUE : FALSE);
     }

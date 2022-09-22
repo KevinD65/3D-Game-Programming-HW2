@@ -176,6 +176,7 @@ void MainWindow::DiscardGraphicsResources()
     SafeRelease(&pBrush);
 }
 
+//ALL PAINTING OCCURS THROUGH THIS FUNCTION
 void MainWindow::OnPaint()
 {
     HRESULT hr = CreateGraphicsResources();
@@ -507,5 +508,6 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         return 0;
     }
+
     return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
 }
