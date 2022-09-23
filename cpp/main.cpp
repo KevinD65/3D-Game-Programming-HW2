@@ -87,6 +87,15 @@ class MainWindow : public BaseWindow<MainWindow>
         DragMode
     };
 
+    enum Algorithm
+    {
+        MinkowskiDiff,
+        MinkowskiSum,
+        Quickhull,
+        PointConvexHull,
+        Gjk
+    };
+
     HCURSOR                 hCursor;
 
     ID2D1Factory            *pFactory;
@@ -95,6 +104,7 @@ class MainWindow : public BaseWindow<MainWindow>
     D2D1_POINT_2F           ptMouse;
 
     Mode                    mode;
+    Algorithm               algo; //used for determining which algorithm is being shown at the moment
     size_t                  nextColor;
 
     list<shared_ptr<MyEllipse>>             ellipses;
@@ -126,6 +136,7 @@ class MainWindow : public BaseWindow<MainWindow>
     void    OnLButtonUp();
     void    OnMouseMove(int pixelX, int pixelY, DWORD flags);
     void    OnKeyDown(UINT vkey);
+
 
 public:
 
@@ -487,6 +498,10 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
         switch (LOWORD(wParam))
         {
+        case MINKOW_DIFF:
+            algo = MinkowskiDiff;
+            SetWindowTextW(m_hwnd, L"HAHAHAHAHAHAHAH");
+            break;
         case ID_DRAW_MODE:
             SetMode(DrawMode);
             break;
