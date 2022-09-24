@@ -1,9 +1,11 @@
 #include <windows.h>
 #include <Windowsx.h>
 #include <d2d1.h>
+#include <iostream>
 
 #include <list>
 #include <memory>
+#include <vector> //for drawing convex hulls
 using namespace std;
 
 #pragma comment(lib, "d2d1")
@@ -187,12 +189,395 @@ void MainWindow::DiscardGraphicsResources()
     SafeRelease(&pBrush);
 }
 
+int dot_product(int vector_a[], int vector_b[]) {
+    int product = 0;
+    for (int i = 0; i < 3; i++)
+        product = product + vector_a[i] * vector_b[i];
+    return product;
+}
+
+
+int PointFarthestFromEdge(int point_a[], int point_b[], int** points, int numPoints) { //might need to convert points[][] to pointer since we don't know the size
+
+    int vector_edge[2] = { point_b[0] - point_a[0], point_b[1] - point_a[1] };
+    int vector_perpendicularEdge[2] = { -vector_edge[1], vector_edge[0]};
+
+    int indexOfFarthestSoFar = -1;
+    float maxVal = -FLT_MAX, rightMostVal = -FLT_MAX;
+
+    for (int i = 0; i < numPoints; i++) {
+        int point[2] = { **(points + i), *(*points + 1) }; //access row and column
+        int d = dot_product(point, vector_perpendicularEdge);
+        int r = dot_product(point, vector_edge);
+        if (d > maxVal || (d == maxVal && r > rightMostVal)) {
+            indexOfFarthestSoFar = i;
+            maxVal = (float)d;
+            rightMostVal = (float)r;
+        }
+    }
+
+    return indexOfFarthestSoFar;
+}
+
 //ALL PAINTING OCCURS THROUGH THIS FUNCTION
 void MainWindow::OnPaint()
 {
     HRESULT hr = CreateGraphicsResources();
     if (SUCCEEDED(hr))
     {
+        if (algo == PointConvexHull) {
+            SetWindowTextW(m_hwnd, L"LMAOBOZOPPPOOPOO");
+
+            //POINT FARTHEST FROM EDGE
+
+            
+            //implement pointfarthestfromedge in order to implement getConvexHull in order to draw convexhull to canvas
+            //draw draggable circle
+            //implement dragging and inside/outside detection
+
+
+        }
+        /*
+        import AFG_ConvexHull from "../AFG_ConvexHull.js";
+import AFG_Circle from "../AFG_Circle.js";
+import {getRandomInt} from "../AFG_Math.js";
+import {PointConvexHullIntersectionMouseMoveHandler} from "../AFG_MouseHandlers.js";
+
+export default class PointConvexHullIntersectionDemo {
+    constructor() {
+    }
+
+    resetDemo(sceneGraph,renderer) {
+        this.sceneGraph = sceneGraph;
+        this.renderer = renderer;
+        this.renderer.renderStats = false;
+        this.renderer.renderQuickHull = true;
+
+        let mouseMoveHandler = new PointConvexHullIntersectionMouseMoveHandler();
+
+
+        let margin = 20;
+
+        var hull = new AFG_ConvexHull();
+
+        hull.quickHull = true;
+
+        // INITIALIZE ALL NEEDED SHAPES
+        // var graph = new AFG_Graph();
+        // window.afg.sceneGraph.addSceneObject(graph);
+
+        for (var i = 0; i < 15; i++) {
+            var circle = new AFG_Circle();
+            circle.setMouseMoveHandler(mouseMoveHandler);
+            var maxWidth = this.renderer.grid.windowWidth;
+            var maxHeight = this.renderer.grid.windowHeight;
+            circle.centerX = getRandomInt(0 + margin, maxWidth - margin);
+            circle.centerY = getRandomInt(0 + margin, maxHeight - margin);
+            circle.radius = 0;
+            //window.afg.sceneGraph.addSceneObject(circle);
+            hull.points.push(circle);
+        }
+        // PROVIDE EVENT HANDLING RESPONSES
+        // THAT WILL EMPLOY INTERSECTION TESTS
+
+        hull.setMouseMoveHandler(mouseMoveHandler);
+        // PROVIDE TEXTUAL DESCRIPTIONS
+        this.sceneGraph.addSceneObject(hull);
+
+
+        var circle = new AFG_Circle();
+        circle.setMouseMoveHandler(mouseMoveHandler);
+        circle.centerX = 400;
+        circle.centerY = 400;
+        circle.radius = 10;
+        circle.vectorProperty = null;
+        this.sceneGraph.addSceneObject(circle);
+
+
+    }
+
+    generateStats(stats, eventHandler) {
+        stats.numStats = 0;
+    }
+
+    
+    getProperties(){
+        let properties = new Array();
+        properties['sceneGraph'] = this.sceneGraph;
+        return properties;
+    }
+    -------------------------------------------------------------------------------------
+    import AFG_Circle from "./AFG_Circle.js";
+import AFG_Vector from "./AFG_Vector.js";
+import AFG_QuickHull from "./AFG_QuickHull.js";
+import { dotProductVectors } from "./AFG_Math.js";
+import { AFG_ShapeType } from "./AFG_ShapeConstants.js";
+import AFG_PhysicalProperties from "./AFG_PhysicalProperties.js";
+import AFG_Shape from "./AFG_Shape.js";
+import { setUpHandlers } from "./AFG_MouseHandlers.js";
+
+export default class AFG_ConvexHull extends AFG_Shape {
+    constructor() {
+        super();
+        setUpHandlers(this);
+        this.shapeType = AFG_ShapeType.CONVEX_HULL;
+        this.points = [];
+        this.quickHull = false;
+        this.strokeStyle = "white";
+
+        this.physicalProperties = new AFG_PhysicalProperties();
+    }
+
+    //
+
+    contains(properties, posX, posY) {
+        let renderer = properties["renderer"];
+        for (var i = 0; i < this.points.length; i++) {
+            if (this.points[i].contains(properties, posX, posY))
+                return false;
+        }
+        var hull = new AFG_QuickHull();
+        hull.originalList = this.points;
+        var outterHull = hull.getConvexHull(renderer.grid);
+
+        var point = new AFG_Circle();
+        point.centerX = renderer.grid.convertTransXToPixel(posX);
+        point.centerY = renderer.grid.convertTransYToPixel(posY);
+
+        for (var i = 1; i < outterHull.length; i++) {
+            if (outterHull[i - 1] !== outterHull[i]) {
+                if (!this.isPointInside(renderer.grid, outterHull[i - 1], outterHull[i], point)) {
+                    //console.log("FALSE");
+                    return false;
+                }
+            }
+        }
+        if (outterHull[outterHull.length - 1] !== outterHull[0]) {
+            if (!this.isPointInside(renderer.grid, outterHull[outterHull.length - 1], outterHull[0], point)) {
+                //console.log("FALSE");
+                return false;
+            }
+        }
+        //console.log("TRUE");
+        return true;
+    }
+
+    // Tests if the point is on the right side of every side of the
+    // convex hull
+
+    isPointInside(grid, point1, point2, pointTested) {
+        var lineVector = new AFG_Vector();
+        lineVector.endPoints[0] = point1;
+        lineVector.endPoints[1] = point2;
+        var xComp = lineVector.getXComponent(grid);
+        var yComp = lineVector.getYComponent(grid);
+        lineVector.components.x = xComp;
+        lineVector.components.y = yComp;
+
+        var perpendicularVector = new AFG_Vector();
+        perpendicularVector.components.x = lineVector.components.y;
+        perpendicularVector.components.y = lineVector.components.x * -1;
+        if (lineVector.components.y == 0)
+            perpendicularVector.components.x = 0;
+
+        if (lineVector.components.x == 0)
+            perpendicularVector.components.y = 0;
+
+        var vectorPointToPoint1 = new AFG_Vector();
+        vectorPointToPoint1.components.x = pointTested.getDrawingX(grid.getGridXTranslation(), grid.centerWidth, grid.scalingFactor) -
+            point1.getDrawingX(grid.getGridXTranslation(), grid.centerWidth, grid.scalingFactor);
+        vectorPointToPoint1.components.y = (pointTested.getDrawingY(grid.getGridYTranslation(), grid.centerHeight, grid.scalingFactor) -
+            point1.getDrawingY(grid.getGridYTranslation(), grid.centerHeight, grid.scalingFactor)) * -1;
+
+        var normalizedVectorPointToPoint1 = vectorPointToPoint1.normalizeComponents();
+        var normalizedPerpendicular = perpendicularVector.normalizeComponents();
+
+        var dotProduct = dotProductVectors(normalizedPerpendicular, normalizedVectorPointToPoint1);
+
+        if (dotProduct >= 0)
+            return true;
+        return false;
+    }
+
+}
+-----------------------------------------------------------------------------------------------------------------------
+drawQuickHull(points) {
+        let processor = new AFG_QuickHull(points);
+        let outLineList = processor.getConvexHull(this.grid);
+        this.canvasContext.lineWidth = 2;
+        for (let i = 1; i < outLineList.length; i++) {
+            let pt1 = outLineList[i - 1];
+            let pt2 = outLineList[i];
+            this.drawLinePath(this.canvasContext, pt1.getDrawingX(this.grid.getGridXTranslation(), this.grid.centerWidth, this.grid.scalingFactor),
+                pt1.getDrawingY(this.grid.getGridYTranslation(), this.grid.centerHeight, this.grid.scalingFactor),
+                pt2.getDrawingX(this.grid.getGridXTranslation(), this.grid.centerWidth, this.grid.scalingFactor),
+                pt2.getDrawingY(this.grid.getGridYTranslation(), this.grid.centerHeight, this.grid.scalingFactor));
+        }
+        this.drawLinePath(this.canvasContext, outLineList[0].getDrawingX(this.grid.getGridXTranslation(), this.grid.centerWidth, this.grid.scalingFactor),
+            outLineList[0].getDrawingY(this.grid.getGridYTranslation(), this.grid.centerHeight, this.grid.scalingFactor),
+            outLineList[outLineList.length - 1].getDrawingX(this.grid.getGridXTranslation(), this.grid.centerWidth, this.grid.scalingFactor),
+            outLineList[outLineList.length - 1].getDrawingY(this.grid.getGridYTranslation(), this.grid.centerHeight, this.grid.scalingFactor));
+    }
+-------------------------------------------------------------------------------------------------------------------------
+import AFG_Vector from "./AFG_Vector.js";
+import { dotProductVectors, pointFarthestFromEdge } from "./AFG_Math.js";
+
+export default class AFG_QuickHull {
+    constructor(originalList) {
+        this.originalList = originalList;
+    }
+
+    //Array.splice, Array.indexOf
+
+    // @TODO PURGE INTERNAL POINTS EVERY TIME TO REDUCE COMPUTATION SPEEDS
+
+    getConvexHull(grid) {
+        var hull = [];
+        var extremePoints = [];
+        var leftMostPoint = this.originalList[0];
+        var rightMostPoint = this.originalList[0];
+        var topMostPoint = this.originalList[0];
+        var bottomMostPoint = this.originalList[0];
+
+        for (var i = 0; i < this.originalList.length; i++) {
+            var pt = this.originalList[i];
+            if (pt.centerX < leftMostPoint.centerX)
+                leftMostPoint = pt;
+            if (pt.centerX > rightMostPoint.centerX)
+                rightMostPoint = pt;
+            if (pt.centerY < topMostPoint.centerY)
+                topMostPoint = pt;
+            if (pt.centerY > bottomMostPoint.centerY)
+                bottomMostPoint = pt;
+        }
+
+        hull.push(topMostPoint);
+        hull.push(rightMostPoint);
+        hull.push(bottomMostPoint);
+        hull.push(leftMostPoint);
+
+        extremePoints.push(topMostPoint);
+        extremePoints.push(rightMostPoint);
+        extremePoints.push(bottomMostPoint);
+        extremePoints.push(leftMostPoint);
+
+        //this.pointFarthestFromEdge(hull[0], hull[1], this.originalList);
+
+        for (var i = 1; i < hull.length + 1; i++) {
+            if (i != hull.length) {
+                var farthestPt = pointFarthestFromEdge(grid, hull[i - 1], hull[i], this.originalList);
+                if (farthestPt != undefined && hull.indexOf(farthestPt) == -1) {
+                    hull.splice(i, 0, farthestPt);
+                    if (i > 1)
+                        i = i - 2;
+                    else
+                        i--;
+                }
+            } else {
+                var farthestPt = pointFarthestFromEdge(grid, hull[hull.length - 1], hull[0], this.originalList);
+                if (farthestPt != undefined && hull.indexOf(farthestPt) == -1) {
+                    hull.splice(i, 0, farthestPt);
+                    if (i > 1)
+                        i = i - 2;
+                    else
+                        i--;
+                }
+            }
+        }
+
+        //console.log(hull);
+        return hull;
+    }
+
+    purgeInternalPoints() {
+
+    }
+
+    isPointInside(grid, point1, point2, pointTested) {
+        var lineVector = new AFG_Vector();
+        lineVector.endPoints[0] = point1;
+        lineVector.endPoints[1] = point2;
+        var xComp = lineVector.getXComponent(grid);
+        var yComp = lineVector.getYComponent(grid);
+        lineVector.components.x = xComp;
+        lineVector.components.y = yComp;
+
+        var perpendicularVector = new AFG_Vector();
+        perpendicularVector.components.x = lineVector.components.y;
+        perpendicularVector.components.y = lineVector.components.x * -1;
+        if (lineVector.components.y == 0)
+            perpendicularVector.components.x = 0;
+
+        if (lineVector.components.x == 0)
+            perpendicularVector.components.y = 0;
+
+        var vectorPointToPoint1 = new AFG_Vector();
+        vectorPointToPoint1.components.x = pointTested.getDrawingX(grid.getGridXTranslation(), grid.centerWidth, grid.scalingFactor) -
+            point1.getDrawingX(grid.getGridXTranslation(), grid.centerWidth, grid.scalingFactor);
+        vectorPointToPoint1.components.y = (pointTested.getDrawingY(grid.getGridYTranslation(), grid.centerHeight, grid.scalingFactor) -
+            point1.getDrawingY(grid.getGridYTranslation(), grid.centerHeight, grid.scalingFactor)) * -1;
+
+        var normalizedVectorPointToPoint1 = vectorPointToPoint1.normalizeComponents();
+        var normalizedPerpendicular = perpendicularVector.normalizeComponents();
+
+        var dotProduct = dotProductVectors(normalizedPerpendicular, normalizedVectorPointToPoint1);
+
+        if (dotProduct >= 0)
+            return true;
+        return false;
+    }
+}
+------------------------------------------------------------------------------------------------------------------------------------------------
+export function pointFarthestFromEdge(grid, point1, point2, pointsList) {
+    var lineVector = new AFG_Vector();
+    lineVector.endPoints[0] = point1;
+    lineVector.endPoints[1] = point2;
+    var xComp = lineVector.getXComponent(grid);
+    var yComp = lineVector.getYComponent(grid);
+
+    lineVector.components.x = xComp;
+    lineVector.components.y = yComp;
+
+    var perpendicularVector = new AFG_Vector();
+    perpendicularVector.components.x = lineVector.components.y * -1;
+    perpendicularVector.components.y = lineVector.components.x;
+
+    var bestIndex = -1;
+
+    // Note that this took 3 days to figure out, negative 0 is a thing
+
+    if (lineVector.components.y == 0)
+        perpendicularVector.components.x = 0;
+
+    //
+
+    var maxVal = -2;
+    var rightMostValue = -2;
+
+
+    for (var i = 0; i < pointsList.length; i++) {
+        var vectorPointToPoint1 = new AFG_Vector();
+        vectorPointToPoint1.components.x = pointsList[i].getDrawingX(grid.getGridXTranslation(), grid.centerWidth, grid.scalingFactor) -
+            point1.getDrawingX(grid.getGridXTranslation(), grid.centerWidth, grid.scalingFactor);
+        vectorPointToPoint1.components.y = (pointsList[i].getDrawingY(grid.getGridYTranslation(), grid.centerHeight, grid.scalingFactor) -
+            point1.getDrawingY(grid.getGridYTranslation(), grid.centerHeight, grid.scalingFactor)) * -1;
+        var normalizedVectorPointToPoint1 = vectorPointToPoint1.normalizeComponents();
+        var normalizedPerpendicular = perpendicularVector.normalizeComponents();
+        var normalizedLineVector = lineVector.normalizeComponents();
+        var d = dotProductVectors(normalizedVectorPointToPoint1, normalizedPerpendicular);
+        var r = dotProductVectors(normalizedVectorPointToPoint1, normalizedLineVector);
+        if (d > maxVal || (d == maxVal && r > rightMostValue)) {
+            bestIndex = i;
+            maxVal = d;
+            rightMostValue = r;
+        }
+    }
+
+    return pointsList[bestIndex];
+}
+
+}*/
+
         PAINTSTRUCT ps;
         BeginPaint(m_hwnd, &ps);
      
@@ -420,6 +805,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int nCmdShow)
 {
     MainWindow win;
 
+    std::cout << "HI";
+
     if (!win.Create(L"Draw Circles", WS_OVERLAPPEDWINDOW)) //CALLS Create FUNCTION IN basewin.h AND CREATES THE MAIN WINDOW
     {
         return 0;
@@ -500,8 +887,25 @@ LRESULT MainWindow::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         {
         case MINKOW_DIFF:
             algo = MinkowskiDiff;
-            SetWindowTextW(m_hwnd, L"HAHAHAHAHAHAHAH");
+            SetWindowTextW(m_hwnd, L"MD");
             break;
+        case MINKOW_SUM:
+            algo = MinkowskiSum;
+            SetWindowTextW(m_hwnd, L"MS");
+            break;
+        case QUICK:
+            algo = Quickhull;
+            SetWindowTextW(m_hwnd, L"Q");
+            break;
+        case POINT_CONVEX:
+            algo = PointConvexHull;
+            SetWindowTextW(m_hwnd, L"PC");
+            break;
+        case GJK:
+            algo = Gjk;
+            SetWindowTextW(m_hwnd, L"GJK");
+            break;
+
         case ID_DRAW_MODE:
             SetMode(DrawMode);
             break;
